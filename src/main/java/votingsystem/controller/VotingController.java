@@ -1,11 +1,15 @@
 package votingsystem.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import votingsystem.model.VoteRequest;
 import votingsystem.model.VotingItem;
 import votingsystem.service.VotingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/voting")
@@ -30,7 +34,14 @@ public class VotingController {
     }
 
     @PostMapping("/vote")
-    public void vote(@RequestParam String voter, @RequestBody List<Integer> votingItemIds) {
-        votingService.vote(voter, votingItemIds);
+    public void vote(@RequestBody VoteRequest voteRequest) {
+        votingService.vote(voteRequest.getVoter(), voteRequest.getVotingItemIds());
+    }
+
+    // 獲取所有投票項目及其票數
+    @GetMapping("/items-with-votes")
+    public ResponseEntity<List<Map<String, Object>>> getAllVotingItemsWithVotes() {
+        List<Map<String, Object>> votingItemsWithVotes = votingService.getAllVotingItemsWithVoteCounts();
+        return new ResponseEntity<>(votingItemsWithVotes, HttpStatus.OK);
     }
 }

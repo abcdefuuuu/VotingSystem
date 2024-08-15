@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class VotingService {
@@ -35,12 +38,27 @@ public class VotingService {
 
     @Transactional
     public void vote(String voter, List<Integer> votingItemIds) {
-        for (Integer id : votingItemIds) {
-            VotingItem item = votingItemRepository.findById(id).orElseThrow();
+        for (Integer votingItemId : votingItemIds) {
+            VotingItem votingItem = votingItemRepository.findById(votingItemId)
+                    .orElseThrow(() -> new RuntimeException("VotingItem not found"));
+
             Vote vote = new Vote();
-            vote.setVoter(voter); // 確保 Vote 類中有 setVoter 方法
-            vote.setVotingItem(item); // 確保 Vote 類中有 setVotingItem 方法
+            vote.setVoter(voter);
+            vote.setVotingItem(votingItem);
+
             voteRepository.save(vote);
         }
+    }
+
+    public List<Map<String, Object>> getAllVotingItemsWithVoteCounts() {
+        List<VotingItem> votingItems = votingItemRepository.findAll();
+        return votingItems.stream().map(item -> {
+            Map<String, Object> itemWithCount = new HashMap<>();
+            itemWithCount.put("id", item.getId());
+            itemWithCount.put("name", item.getName());
+            long voteCount = voteRepository.countByVotingItemId(item.getId());
+            itemWithCount.put("voteCount", voteCount);
+            return itemWithCount;
+        }).collect(Collectors.toList());
     }
 }
